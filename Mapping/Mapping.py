@@ -26,14 +26,109 @@ import pyodbc
 #import subprocess
 
 
+import fdb
 
-connection_string='Driver={SQL Server Native Client 11.0};Server=PARSING01\SQLEXPRESS;Database=Parsing;Trusted_Connection=yes;'
+con = fdb.connect(dsn='/temp/test.db', user='sysdba', password='masterkey')
+
+# Create a Cursor object that operates in the context of Connection con:
+cur = con.cursor()
+
+# Execute the SELECT statement:
+cur.execute("select * from languages order by year_released")
+
+# Retrieve all rows as a sequence and print that sequence:
+print ( cur.fetchall() )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import cx_Oracle
+
+
+username = 'opera'
+password = 'opera'
+dsn = 'localhost/pdborcl'
+port = 1521
+encoding = 'UTF-8'
+
+hostname = '10.10.21.33'
+servicename = 'opera'
+
+username = 'train'
+password = 'train'
+dsn = '10.10.21.33/opera'
+port = 1521
+
+connection = None
+connection = cx_Oracle.connect(username, password,dsn, encoding=encoding)
+connection.close()
+
+
+
+
+
+
+connection_string='Driver={SQL Server Native Client 11.0};Server=PARSING01\SQLEXPRESS;Database=Mapping;Trusted_Connection=yes;'
 #f = open("c:\parsing\connection_string.txt")
 #connection_string =  f.read()  
 #f.close
 
+#PMS_ServerID
+#Agent
+#Market
+#Hotel
+#RoomType
+#RoomCategory
+#Board
+#Remark
+parvals=[
+    ('PMS_ServerID','1'),
+    ('Hotel','CED'),
+    ('Hotel','Hotel ROYAL GARDEN'),
+    ('RoomType','SUP 2 PV'),
+    ('Board','AI')
+    ]
+
+
 conn = pyodbc.connect(connection_string)
 cursor = conn.cursor()
+
+cursor.execute('exec Mapping.dbo.GetConclusions ?' ,( parvals,))
+
+x=cursor.fetchall()
+
+cursor.commit()
+
+
+
+
+
+cursor.execute('select * from Mapping.dbo.Params')
+
+
+
+
+
 
 cursor.execute('select * from Mapping.dbo.Params')
 
@@ -70,11 +165,12 @@ for r in cursor:
     
     row_as_dict = dict(zip(col_names, r))
     for col_name in col_names:
-        conn2 = pyodbc.connect(connection_string)
-        cursor2 = conn2.cursor()
-        cursor2.execute('insert into Mapping.dbo.Premise(SetID,ParamID,ParamValue) select ?,?,?'
-                        , SetID, col[col_name],row_as_dict[col_name] )
-        cursor2.commit()
+        if row_as_dict[col_name]:
+            conn2 = pyodbc.connect(connection_string)
+            cursor2 = conn2.cursor()
+            cursor2.execute('insert into Mapping.dbo.Premise(SetID,ParID,ParVal) select ?,?,?'
+                            , SetID, col[col_name],row_as_dict[col_name] )
+            cursor2.commit()
     
     #print(row_as_dict['Agent'])  # no error  row_as_dict['FolderName'] === row.FolderName
 
